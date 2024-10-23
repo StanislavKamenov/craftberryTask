@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import questions from '../../utils/questions';
 import { useNavigate } from 'react-router';
 import './Quiz.css';
@@ -10,13 +10,16 @@ const Quiz = () => {
     const totalStages = 5;
 
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-    const [selectedAnswers, setSelectedAnswers] = useState({});
+    const [selectedAnswers, setSelectedAnswers] = useState(() => {
+        const savedAnswers = localStorage.getItem('quiz-answers');
+        return savedAnswers ? JSON.parse(savedAnswers) : {};
+    });
 
     const answeredQuestions = useMemo(
         () => Object.keys(selectedAnswers).length,
         [selectedAnswers]
     );
-
+    
     const progressStage = useMemo(
         () => Math.ceil((answeredQuestions / allQuestions.length) * totalStages),
         [answeredQuestions, allQuestions.length, totalStages]
@@ -26,8 +29,13 @@ const Quiz = () => {
     const isLastQuestion = currentQuestionIndex === allQuestions.length - 1;
     const lastQuestionText = isLastQuestion ? 'Discover your results' : 'Next Question';
 
+    useEffect(() => {
+        localStorage.setItem('quiz-answers', JSON.stringify(selectedAnswers));
+    }, [selectedAnswers]);
+
     const handleNext = useCallback(() => {
         if (isLastQuestion) {
+            localStorage.removeItem('quiz-answers');
             navigate('/results');
         } else {
             setCurrentQuestionIndex((prevIndex) => prevIndex + 1);
@@ -101,9 +109,7 @@ const Quiz = () => {
                     />
                     <circle
                         className="progress"
-                        cx="50"
-                        cy="50"
-                        r="45"
+                        cx="50" cy="50" r="45"
                         fill="none"
                         stroke="blue"
                         strokeWidth="10"
